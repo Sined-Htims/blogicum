@@ -4,47 +4,47 @@
 
 1. Установить виртуальное окружение.
 
-'''bash
+```bash
 python -m venv venv
-'''
+```
 
 2. Активировать виртуальное окружение.
 
-'''bash
+```bash
 . venv/Scripts/activate
-'''
+```
 
 3. Установить зависиости из requirements.txt.
 
-'''bash
+```bash
 pip install -r requirements.txt
-'''
+```
 
 4. Перейти в директорию с файлом "manage.py".
 
-'''bash
+```bash
 cd ./<название_директории>/
-'''
+```
 
 5. Применить миграции.
 
-'''bash
+```bash
 python manage.py migrate
-'''
+```
 
 6. Создать суперпользователя.
 
-'''bash
+```bash
 python manage.py createsuperuser
-'''
+```
 
 7. Запустить сервер.
 
-'''bash
+```bash
 python manage.py runserver
-'''
+```
 
-8. Наслаждаться.
-
-*(Приведенные команды используются для bash/windows)
-*sprint4
+8. Наслаждаться:coffee:.
+<br>
+<br>*Приведенные команды используются для Bash/OC Windows
+<br>*sprint4
