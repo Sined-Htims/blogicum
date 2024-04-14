@@ -44,7 +44,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-8. Наслаждаться:coffee:.
+8. Наслаждаться :coffee:
 <br>
 <br>*Приведенные команды используются для Bash/OC Windows
 <br>*sprint4
