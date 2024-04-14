@@ -1,39 +1,26 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import (
-    LoginRequiredMixin, UserPassesTestMixin, AccessMixin
-)
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
-from django.views.generic import (
-    ListView, DetailView, CreateView, UpdateView, DeleteView
-)
-from django.utils import timezone
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404, render, redirect
-from .models import Category, Post, Comments
-from .forms import PostForm, CommentsForm, UserUpdateForm
+from django.utils import timezone
+from django.views.generic import (
+    CreateView, DeleteView, DetailView, ListView, UpdateView
+)
+
+from .forms import CommentsForm, PostForm, UserUpdateForm
+from .mixins import SuperuserOrAuthorMixin
+from .models import Category, Comments, Post
 
 User = get_user_model()
 
 
-class SuperuserOrAuthorMixin(UserPassesTestMixin, AccessMixin):
-    def test_func(self):
-        self.object = self.get_object()
-        if '/profile/' in self.request.path:
-            return self.request.user.username == self.object.username
-        else:
-            return self.request.user == self.object.author
-
-    def handle_no_permission(self, **kwargs):
-        if '/profile/' in self.request.path:
-            return redirect('blog:profile', self.kwargs['username'])
-        else:
-            return redirect('blog:post_detail', self.kwargs['post_id'])
-
-
 class PostsListView(ListView):
     model = Post
-    paginate_by = 10
+    paginate_by = settings.POSTS_PER_PAGE
     queryset = Post.objects.select_related(
         'category', 'location', 'author'
     ).filter(
@@ -61,20 +48,22 @@ class PostsDetailView(DetailView):
         return context
 
     def get_queryset(self, **kwargs):
-        post = get_object_or_404(Post, pk=self.kwargs['post_id'])
+        post_id = self.kwargs['post_id']
         queryset = Post.objects.select_related(
             'location',
             'author',
             'category'
-        ).filter(pk=self.kwargs['post_id'])
+        ).filter(pk=post_id)
+        post = queryset.first()
+        if not post:
+            raise Http404
         if post.author == self.request.user:
             return queryset
-        else:
-            return queryset.filter(
-                is_published=True,
-                category__is_published=True,
-                pub_date__lt=timezone.now(),
-            )
+        return queryset.filter(
+            is_published=True,
+            category__is_published=True,
+            pub_date__lt=timezone.now(),
+        )
 
 
 class PostsCreateView(LoginRequiredMixin, CreateView):
@@ -112,7 +101,7 @@ class PostDeleteView(LoginRequiredMixin, SuperuserOrAuthorMixin, DeleteView):
 
 
 class CategoryListView(ListView):
-    paginate_by = 10
+    paginate_by = settings.CATEGORY_PER_PAGE
     template_name = 'blog/category.html'
 
     def get_context_data(self, **kwargs):
@@ -147,19 +136,21 @@ class CategoryListView(ListView):
 
 class ProfileListView(ListView):
     model = User
-    paginate_by = 10
+    paginate_by = settings.PROFILE_PER_PAGE
     template_name = 'blog/profile_list.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['profile'] = get_object_or_404(
-            User.objects.all(),
-            username=self.kwargs['username']
-        )
+        context['profile'] = self.user
+        # context['profile'] = get_object_or_404(
+        #     User,
+        #     username=self.kwargs['username']
+        # ) так было
         return context
 
     def get_queryset(self, **kwargs):
-        user = get_object_or_404(User, username=self.kwargs['username'])
+        username = self.kwargs['username']
+        self.user = get_object_or_404(User, username=username)
         queryset = Post.objects.select_related(
             'location',
             'author',
@@ -169,14 +160,14 @@ class ProfileListView(ListView):
         ).order_by(
             '-pub_date'
         )
-        if user == self.request.user:
-            return queryset.filter(author_id__username=self.kwargs['username'])
+        if self.user == self.request.user:
+            return queryset.filter(author_id__username=username)
         else:
             return queryset.filter(
                 is_published=True,
                 category__is_published=True,
                 pub_date__lt=timezone.now(),
-                author_id__username=self.kwargs['username']
+                author_id__username=username
             )
 
 
@@ -198,14 +189,13 @@ class ProfileUpdateView(
 @login_required
 def add_comment(request, post_id, comment_id=None,):
     post = get_object_or_404(Post, pk=post_id)
+    comment = None
     if comment_id is not None:
-        instance = get_object_or_404(Comments, pk=comment_id)
-        if instance.author != request.user:
+        comment = get_object_or_404(Comments, pk=comment_id)
+        if comment.author != request.user:
             return redirect('blog:post_detail', post_id)
-    else:
-        instance = None
-    form = CommentsForm(request.POST or None, instance=instance)
-    context = {'form': form, 'post': post, 'comment': instance}
+    form = CommentsForm(request.POST or None, instance=comment)
+    context = {'form': form, 'post': post, 'comment': comment}
     if form.is_valid():
         comments = form.save(commit=False)
         comments.author = request.user

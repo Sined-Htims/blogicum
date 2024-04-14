@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Category, Location, Post
+
+from .models import Category, Comments, Location, Post
 
 admin.site.register(Location)
 
@@ -41,3 +42,15 @@ class PostAdmin(admin.ModelAdmin):
     )
     list_filter = ('category',)
     search_fields = ('title',)
+
+
+@admin.register(Comments)
+class Comments(admin.ModelAdmin):
+    list_display = (
+        'text',
+        'post',
+        'created_at',
+        'author',
+    )
+    list_filter = ('post',)
+    search_fields = ('author',)
