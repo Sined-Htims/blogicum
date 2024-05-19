@@ -1,4 +1,14 @@
-# Blogicum
+# Проект Blogicum
+
+## Цель работы:
+
+Научится следующему:  
+1. Подключать к проекту кастомные страницы для ошибок. :heavy_check_mark:
+2. Работать с моделью пользователя в проекте. :heavy_check_mark: :grey_question:
+3. Подключать пагинацию к страницам. :heavy_check_mark:
+4. Работать с изображениями. :heavy_check_mark: :grey_question:
+5. Работать с *view-классами*. :heavy_check_mark:
+6. Создавать права доступа для пользователей. :heavy_check_mark:
 
 ## Разворачивание проекта.
 
@@ -44,7 +54,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-8. Наслаждаться :coffee:
-<br>
-<br>*Приведенные команды используются для Bash/OC Windows
-<br>*sprint4
+8. Наслаждаться :coffee:  
+
+**Приведенные команды используются для Bash/OC Windows*  
+**Это третий спринт из курса "Бэкенд на Django Ver.2.0" от Яндекс.Практикум*
